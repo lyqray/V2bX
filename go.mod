@@ -1,12 +1,12 @@
 module github.com/InazumaV/V2bX
 
-go 1.25
+go 1.25.6
 
-toolchain go1.25.0
+toolchain go1.25.6
 
 require (
-	github.com/apernet/hysteria/core/v2 v2.6.4
-	github.com/apernet/hysteria/extras/v2 v2.6.4
+	github.com/apernet/hysteria/core/v2 v2.7.0
+	github.com/apernet/hysteria/extras/v2 v2.7.0
 	github.com/beevik/ntp v1.4.4-0.20240716062501-06ef196b89ec
 	github.com/fsnotify/fsnotify v1.9.0
 	github.com/go-acme/lego/v4 v4.25.2
@@ -18,7 +18,7 @@ require (
 	github.com/spf13/cobra v1.9.1
 	github.com/spf13/viper v1.19.0
 	github.com/vmihailenco/msgpack/v5 v5.4.1
-	github.com/xtls/xray-core v1.251202.0
+	github.com/xtls/xray-core v1.260123.0
 	go.uber.org/zap v1.27.0
 	golang.org/x/crypto v0.44.0
 	golang.org/x/sys v0.38.0
@@ -332,4 +332,4 @@ require (
 
 replace github.com/sagernet/sing-box v1.13.0 => github.com/wyx2685/sing-box_mod v1.13.0-alpha.5.0.20251202212447-8d054dcd8bfe
 
-replace github.com/xtls/xray-core v1.251202.0 => github.com/wyx2685/xray-core v0.0.0-20251202200223-63db1dc9e9e2
+replace github.com/xtls/xray-core v1.260123.0 => github.com/wyx2685/xray-core v0.0.0-20260126151638-a42519a3ece4

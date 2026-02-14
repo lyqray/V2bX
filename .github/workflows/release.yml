@@ -7,15 +7,17 @@ on:
       - master
       - dev_new
     paths:
-      - "**/*.go"
-      - "go.mod"
+      # 因为加入了 tidy.yml，所以等待 tidy 计算出 go.sum 的修改文件后再触发 release 构建
+      # - "**/*.go"
+      # - "go.mod"
       - "go.sum"
       - ".github/workflows/release.yml"
   pull_request:
     types: [opened, synchronize, reopened]
     paths:
-      - "**/*.go"
-      - "go.mod"
+      # 因为加入了 tidy.yml，所以等待 tidy 计算出 go.sum 的修改文件后再触发 release 构建
+      # - "**/*.go"
+      # - "go.mod"
       - "go.sum"
       - ".github/workflows/release.yml"
   release:
@@ -109,7 +111,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.25.0'
+          go-version: '1.25.6'
 
       - name: Get project dependencies
         run: |
