@@ -40,7 +40,7 @@ func (h *HookServer) RoutedConnection(_ context.Context, conn net.Conn, m adapte
 		log.Error("[", m.Inbound, "] ", "Limited ", m.User, " by ip or conn")
 		return conn
 	} else if b != nil {
-		conn = rate.NewConnRateLimiter(conn, b)
+		conn = rate.NewConnRateLimiter(conn, b.Get())
 	}
 	if l != nil {
 		destStr := m.Destination.AddrString()
@@ -88,7 +88,7 @@ func (h *HookServer) RoutedPacketConnection(_ context.Context, conn N.PacketConn
 		log.Error("[", m.Inbound, "] ", "Limited ", m.User, " by ip or conn")
 		return conn
 	} else if b != nil {
-		//conn = rate.NewPacketConnCounter(conn, b)
+		// conn = rate.NewPacketConnCounter(conn, b.Get())
 	}
 	if l != nil {
 		destStr := m.Destination.AddrString()
