@@ -31,6 +31,7 @@ type ApiConfig struct {
 	NodeType     string `json:"NodeType"`
 	Timeout      int    `json:"Timeout"`
 	RuleListPath string `json:"RuleListPath"`
+	RetryCount   *int   `json:"RetryCount"`
 }
 
 func (n *NodeConfig) UnmarshalJSON(data []byte) (err error) {
@@ -75,14 +76,11 @@ func (n *NodeConfig) UnmarshalJSON(data []byte) (err error) {
 	}
 	if len(rn.ApiRaw) > 0 {
 		err = json.Unmarshal(rn.ApiRaw, &n.ApiConfig)
-		if err != nil {
-			return
-		}
 	} else {
 		err = json.Unmarshal(data, &n.ApiConfig)
-		if err != nil {
-			return
-		}
+	}
+	if err != nil {
+		return err
 	}
 
 	n.Options = Options{
@@ -92,16 +90,10 @@ func (n *NodeConfig) UnmarshalJSON(data []byte) (err error) {
 	}
 	if len(rn.OptRaw) > 0 {
 		err = json.Unmarshal(rn.OptRaw, &n.Options)
-		if err != nil {
-			return
-		}
 	} else {
 		err = json.Unmarshal(data, &n.Options)
-		if err != nil {
-			return
-		}
 	}
-	return
+	return err
 }
 
 type Options struct {

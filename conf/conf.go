@@ -10,6 +10,9 @@ import (
 	"encoding/json/v2"
 )
 
+const DefaultNodeRetryCount = 1
+const DefaultNodeTimeout = 15
+
 type Conf struct {
 	LogConfig   LogConfig    `json:"Log"`
 	CoresConfig []CoreConfig `json:"Cores"`
@@ -43,5 +46,15 @@ func (p *Conf) LoadFromPath(filePath string) error {
 		return fmt.Errorf("unmarshal config error: %s", err)
 	}
 
+	for i := range p.NodeConfig {
+		if p.NodeConfig[i].ApiConfig.RetryCount == nil {
+			p.NodeConfig[i].ApiConfig.RetryCount = intPtr(DefaultNodeRetryCount)
+		}
+	}
+
 	return nil
+}
+
+func intPtr(v int) *int {
+	return &v
 }

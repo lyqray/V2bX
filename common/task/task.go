@@ -1,51 +1,54 @@
 package task
 
 import (
+	"context"
+	"errors"
 	"sync"
 	"time"
+
+	log "github.com/sirupsen/logrus"
 )
 
 type Task struct {
+	Name     string
 	Interval time.Duration
-	Execute  func() error
-	access   sync.Mutex
-	running  bool
-	stop     chan struct{}
+	Execute  func(context.Context) error
+	Access   sync.RWMutex
+	Running  bool
+	ReloadCh chan struct{}
+	Stop     chan struct{}
 }
 
 func (t *Task) Start(first bool) error {
-	t.access.Lock()
-	if t.running {
-		t.access.Unlock()
+	t.Access.Lock()
+	if t.Running {
+		t.Access.Unlock()
 		return nil
 	}
-	t.running = true
-	t.stop = make(chan struct{})
-	t.access.Unlock()
+	t.Running = true
+	t.Stop = make(chan struct{})
+	t.Access.Unlock()
 
 	go func() {
+		timer := time.NewTimer(t.Interval)
+		defer timer.Stop()
+
 		if first {
-			if err := t.Execute(); err != nil {
-				t.access.Lock()
-				t.running = false
-				close(t.stop)
-				t.access.Unlock()
+			if err := t.ExecuteWithTimeout(); err != nil {
 				return
 			}
 		}
 
 		for {
+			timer.Reset(t.Interval)
 			select {
-			case <-time.After(t.Interval):
-			case <-t.stop:
+			case <-timer.C:
+			case <-t.Stop:
 				return
 			}
 
-			if err := t.Execute(); err != nil {
-				t.access.Lock()
-				t.running = false
-				close(t.stop)
-				t.access.Unlock()
+			if err := t.ExecuteWithTimeout(); err != nil {
+				log.Errorf("Task %s execution error: %v", t.Name, err)
 				return
 			}
 		}
@@ -54,11 +57,48 @@ func (t *Task) Start(first bool) error {
 	return nil
 }
 
-func (t *Task) Close() {
-	t.access.Lock()
-	if t.running {
-		t.running = false
-		close(t.stop)
+func (t *Task) ExecuteWithTimeout() error {
+	ctx, cancel := context.WithTimeout(context.Background(), min(5*t.Interval, 5*time.Minute))
+	defer cancel()
+
+	done := make(chan error, 1)
+	go func() {
+		done <- t.Execute(ctx)
+	}()
+
+	select {
+	case <-ctx.Done():
+		log.Errorf("Task %s execution timed out, reloading", t.Name)
+		if t.ReloadCh != nil {
+			select {
+			case t.ReloadCh <- struct{}{}:
+			default:
+			}
+		} else {
+			log.Panic("Reload failed")
+		}
+		return nil
+	case err := <-done:
+		if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
+			return nil
+		}
+		return err
 	}
-	t.access.Unlock()
+}
+
+func (t *Task) Close() {
+	t.Access.Lock()
+	if t.Running {
+		t.Running = false
+		close(t.Stop)
+	}
+	t.Access.Unlock()
+	log.Warningf("Task %s stopped", t.Name)
+}
+
+func min(a, b time.Duration) time.Duration {
+	if a < b {
+		return a
+	}
+	return b
 }

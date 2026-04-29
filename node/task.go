@@ -1,6 +1,8 @@
 package node
 
 import (
+	"context"
+	"errors"
 	"time"
 
 	"github.com/InazumaV/V2bX/api/panel"
@@ -13,11 +15,13 @@ import (
 func (c *Controller) startTasks(node *panel.NodeInfo) {
 	// fetch node info task
 	c.nodeInfoMonitorPeriodic = &task.Task{
+		Name:     "nodeInfoMonitor",
 		Interval: node.PullInterval,
 		Execute:  c.nodeInfoMonitor,
 	}
 	// fetch user list task
 	c.userReportPeriodic = &task.Task{
+		Name:     "reportUserTrafficTask",
 		Interval: node.PushInterval,
 		Execute:  c.reportUserTrafficTask,
 	}
@@ -49,10 +53,13 @@ func (c *Controller) startTasks(node *panel.NodeInfo) {
 	}
 }
 
-func (c *Controller) nodeInfoMonitor() (err error) {
+func (c *Controller) nodeInfoMonitor(ctx context.Context) (err error) {
 	// get node info
-	newN, err := c.apiClient.GetNodeInfo()
+	newN, err := c.apiClient.GetNodeInfo(ctx)
 	if err != nil {
+		if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
+			return err
+		}
 		log.WithFields(log.Fields{
 			"tag": c.tag,
 			"err": err,
@@ -60,8 +67,11 @@ func (c *Controller) nodeInfoMonitor() (err error) {
 		return nil
 	}
 	// get user info
-	newU, err := c.apiClient.GetUserList()
+	newU, err := c.apiClient.GetUserList(ctx)
 	if err != nil {
+		if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
+			return err
+		}
 		log.WithFields(log.Fields{
 			"tag": c.tag,
 			"err": err,
@@ -69,8 +79,11 @@ func (c *Controller) nodeInfoMonitor() (err error) {
 		return nil
 	}
 	// get user alive
-	newA, err := c.apiClient.GetUserAlive()
+	newA, err := c.apiClient.GetUserAlive(ctx)
 	if err != nil {
+		if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
+			return err
+		}
 		log.WithFields(log.Fields{
 			"tag": c.tag,
 			"err": err,
@@ -217,13 +230,15 @@ func (c *Controller) nodeInfoMonitor() (err error) {
 	return nil
 }
 
-func (c *Controller) SpeedChecker() error {
+func (c *Controller) SpeedChecker(ctx context.Context) error {
 	for u, t := range c.traffic {
 		if t >= c.LimitConfig.DynamicSpeedLimitConfig.Traffic {
 			err := c.limiter.UpdateDynamicSpeedLimit(c.tag, u,
 				c.LimitConfig.DynamicSpeedLimitConfig.SpeedLimit,
 				time.Now().Add(time.Duration(c.LimitConfig.DynamicSpeedLimitConfig.ExpireTime)*time.Minute))
-			log.WithField("err", err).Error("Update dynamic speed limit failed")
+			if err != nil {
+				log.WithField("err", err).Error("Update dynamic speed limit failed")
+			}
 			delete(c.traffic, u)
 		}
 	}

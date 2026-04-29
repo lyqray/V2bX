@@ -1,6 +1,7 @@
 package node
 
 import (
+	"context"
 	"errors"
 	"fmt"
 
@@ -43,19 +44,19 @@ func NewController(server vCore.Core, api *panel.Client, config *conf.Options) *
 func (c *Controller) Start() error {
 	// First fetch Node Info
 	var err error
-	node, err := c.apiClient.GetNodeInfo()
+	node, err := c.apiClient.GetNodeInfo(context.Background())
 	if err != nil {
 		return fmt.Errorf("get node info error: %s", err)
 	}
 	// Update user
-	c.userList, err = c.apiClient.GetUserList()
+	c.userList, err = c.apiClient.GetUserList(context.Background())
 	if err != nil {
 		return fmt.Errorf("get user list error: %s", err)
 	}
 	if len(c.userList) == 0 {
 		return errors.New("add users error: not have any user")
 	}
-	c.aliveMap, err = c.apiClient.GetUserAlive()
+	c.aliveMap, err = c.apiClient.GetUserAlive(context.Background())
 	if err != nil {
 		return fmt.Errorf("failed to get user alive list: %s", err)
 	}

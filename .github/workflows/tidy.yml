@@ -12,14 +12,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           submodules: false 
           # 【关键修改 1】: 使用 PAT 进行检出，这样后续的 commit 才能被视为“人类推送”，防止后续 Action 不触发！
           token: ${{ secrets.MY_PAT }}
 
       - name: Set up Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6
         with:
           go-version: '1.26.1'
 

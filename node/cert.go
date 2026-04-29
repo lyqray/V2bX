@@ -1,6 +1,7 @@
 package node
 
 import (
+	"context"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/x509"
@@ -15,7 +16,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func (c *Controller) renewCertTask() error {
+func (c *Controller) renewCertTask(_ context.Context) error {
 	l, err := NewLego(c.CertConfig)
 	if err != nil {
 		log.WithField("tag", c.tag).Info("new lego error: ", err)
