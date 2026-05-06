@@ -137,7 +137,7 @@ type Hysteria2Node struct {
 	UpMbps                  int    `json:"up_mbps"`
 	DownMbps                int    `json:"down_mbps"`
 	ObfsType                string `json:"obfs"`
-	ObfsPassword            string `json:"obfs-password"`
+	ObfsPassword            string `json:"obfs_password"`
 }
 
 type RawDNS struct {
