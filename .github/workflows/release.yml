@@ -125,10 +125,23 @@ jobs:
         run: |
           echo "version=${{ github.sha }}" >> $GITHUB_ENV
       - name: Build V2bX
+        shell: bash
         run: |
           echo "version: $version"
           mkdir -p build_assets
-          GOEXPERIMENT=jsonv2 go build -v -o build_assets/V2bX -tags "sing xray hysteria2 with_quic with_grpc with_utls with_wireguard with_acme with_gvisor" -trimpath -ldflags "-X 'github.com/InazumaV/V2bX/cmd.version=$version' -s -w -buildid="
+
+          LDFLAGS="-X 'github.com/InazumaV/V2bX/cmd.version=$version' -s -w -buildid="
+
+          # Android ARM64 使用 anet，需要放宽 linkname 检查
+          if [[ "$GOOS" == "android" && "$GOARCH" == "arm64" ]]; then
+            LDFLAGS="$LDFLAGS -checklinkname=0"
+          fi
+
+          GOEXPERIMENT=jsonv2 go build -v \
+            -o build_assets/V2bX \
+            -tags "sing xray hysteria2 with_quic with_grpc with_utls with_wireguard with_acme with_gvisor" \
+            -trimpath \
+            -ldflags "$LDFLAGS"
 
       - name: Build Mips softfloat V2bX
         if: matrix.goarch == 'mips' || matrix.goarch == 'mipsle'
